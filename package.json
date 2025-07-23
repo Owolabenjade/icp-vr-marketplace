@@ -1,0 +1,21 @@
+{
+  "name": "icp-vr-marketplace",
+  "version": "1.0.0",
+  "description": "VR Marketplace built on Internet Computer Protocol",
+  "main": "index.js",
+  "scripts": {
+    "build": "dfx build",
+    "start": "dfx start",
+    "deploy:local": "dfx deploy --network local",
+    "deploy:ic": "dfx deploy --network ic",
+    "generate": "dfx generate",
+    "frontend:dev": "cd frontend && npm run dev",
+    "frontend:build": "cd frontend && npm run build && npm run export"
+  },
+  "keywords": ["icp", "vr", "marketplace", "blockchain"],
+  "authors": ["Benjamin Owolabi", "Edozie Obidile"],
+  "license": "MIT",
+  "devDependencies": {
+    "dfx": "^0.15.0"
+  }
+}
