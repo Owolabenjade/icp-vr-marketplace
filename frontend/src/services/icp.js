@@ -15,18 +15,25 @@ class ICPService {
    this.identity = null;
    this.principal = null;
    this.actors = {};
-   
-   this.init();
+   this.initialized = false;
+
+   // Only initialize in browser environment
+   if (typeof window !== 'undefined') {
+     this.init();
+   }
  }
 
  /**
   * Initialize the ICP service
   */
  async init() {
+   if (this.initialized) return;
+   
    try {
      await this.initAuthClient();
      await this.initAgent();
      await this.checkAuthentication();
+     this.initialized = true;
    } catch (error) {
      console.error('Failed to initialize ICP service:', error);
    }
@@ -36,6 +43,11 @@ class ICPService {
   * Initialize Auth Client
   */
  async initAuthClient() {
+   if (typeof window === 'undefined') {
+     console.warn('AuthClient can only be initialized in browser environment');
+     return;
+   }
+
    this.authClient = await AuthClient.create({
      idleOptions: {
        idleTimeout: 1000 * 60 * 30, // 30 minutes
@@ -52,7 +64,7 @@ class ICPService {
   */
  async initAgent() {
    const network = getNetworkConfig();
-   
+
    this.agent = new HttpAgent({
      host: network.host,
      identity: this.identity,
@@ -68,22 +80,22 @@ class ICPService {
   * Check if user is authenticated
   */
  async checkAuthentication() {
-   if (!this.authClient) {
+   if (!this.authClient || typeof window === 'undefined') {
      return false;
    }
 
    this.isAuthenticated = await this.authClient.isAuthenticated();
-   
+
    if (this.isAuthenticated) {
      this.identity = this.authClient.getIdentity();
      this.principal = this.identity.getPrincipal();
-     
+
      // Update agent with authenticated identity
      this.agent.replaceIdentity(this.identity);
-     
+
      return true;
    }
-   
+
    return false;
  }
 
@@ -91,13 +103,21 @@ class ICPService {
   * Login with Internet Identity
   */
  async login() {
+   if (typeof window === 'undefined') {
+     throw new Error('Login can only be performed in browser environment');
+   }
+
    try {
+     if (!this.authClient) {
+       await this.init();
+     }
+
      if (!this.authClient) {
        throw new Error('Auth client not initialized');
      }
 
      const network = getNetworkConfig();
-     
+
      return new Promise((resolve, reject) => {
        this.authClient.login({
          identityProvider: network.identityProvider,
@@ -130,15 +150,15 @@ class ICPService {
      if (this.authClient) {
        await this.authClient.logout();
      }
-     
+
      this.isAuthenticated = false;
      this.identity = null;
      this.principal = null;
      this.actors = {};
-     
+
      // Reset agent to anonymous
      await this.initAgent();
-     
+
      return { success: true };
    } catch (error) {
      console.error('Logout error:', error);
@@ -152,7 +172,7 @@ class ICPService {
  handleSessionTimeout() {
    console.warn('Session timed out');
    this.logout();
-   
+
    // Emit event for UI to handle
    if (typeof window !== 'undefined') {
      window.dispatchEvent(new CustomEvent('session-timeout'));
@@ -302,7 +322,7 @@ class ICPService {
    if (typeof error === 'string') {
      return error;
    }
-   
+
    if (typeof error === 'object' && error !== null) {
      if ('NotFound' in error) return 'Resource not found';
      if ('Unauthorized' in error) return 'Unauthorized access';
@@ -312,7 +332,7 @@ class ICPService {
      if ('AssetNotForSale' in error) return 'Asset not for sale';
      if ('AlreadyOwned' in error) return 'Asset already owned';
    }
-   
+
    return 'Unknown error occurred';
  }
 
@@ -427,33 +447,51 @@ class ICPService {
  }
 }
 
-// Create singleton instance
-const icpService = new ICPService();
+// Create singleton instance only in browser
+let icpService = null;
+if (typeof window !== 'undefined') {
+  icpService = new ICPService();
+}
 
 /**
 * Authentication helpers
 */
 export const auth = {
  // Login with Internet Identity
- login: () => icpService.login(),
- 
+ login: () => {
+   if (!icpService) throw new Error('ICP service not available');
+   return icpService.login();
+ },
+
  // Logout
- logout: () => icpService.logout(),
- 
+ logout: () => {
+   if (!icpService) throw new Error('ICP service not available');
+   return icpService.logout();
+ },
+
  // Check if authenticated
- isAuthenticated: () => icpService.isUserAuthenticated(),
- 
+ isAuthenticated: () => {
+   if (!icpService) return false;
+   return icpService.isUserAuthenticated();
+ },
+
  // Get current user principal
- getPrincipal: () => icpService.getPrincipal(),
- 
+ getPrincipal: () => {
+   if (!icpService) return null;
+   return icpService.getPrincipal();
+ },
+
  // Get current identity
- getIdentity: () => icpService.getIdentity(),
- 
+ getIdentity: () => {
+   if (!icpService) return null;
+   return icpService.getIdentity();
+ },
+
  // Wait for authentication status
  waitForAuth: () => {
    return new Promise((resolve) => {
      const checkAuth = () => {
-       if (icpService.isUserAuthenticated()) {
+       if (icpService && icpService.isUserAuthenticated()) {
          resolve(true);
        } else {
          setTimeout(checkAuth, 100);
@@ -462,7 +500,7 @@ export const auth = {
      checkAuth();
    });
  },
- 
+
  // Listen for session timeout
  onSessionTimeout: (callback) => {
    if (typeof window !== 'undefined') {
@@ -478,16 +516,28 @@ export const auth = {
 */
 export const actors = {
  // Get specific actor
- get: (canisterName) => icpService.getActor(canisterName),
- 
+ get: (canisterName) => {
+   if (!icpService) return null;
+   return icpService.getActor(canisterName);
+ },
+
  // Get all actors
- getAll: () => icpService.actors,
- 
+ getAll: () => {
+   if (!icpService) return {};
+   return icpService.actors;
+ },
+
  // Reinitialize actors (useful after login)
- reinit: () => icpService.initActors(),
- 
+ reinit: () => {
+   if (!icpService) return;
+   return icpService.initActors();
+ },
+
  // Check if actor exists
- exists: (canisterName) => !!icpService.actors[canisterName],
+ exists: (canisterName) => {
+   if (!icpService) return false;
+   return !!icpService.actors[canisterName];
+ },
 };
 
 /**
@@ -495,21 +545,29 @@ export const actors = {
 */
 export const canister = {
  // Make authenticated call
- call: (canisterName, method, args) => icpService.call(canisterName, method, args),
- 
+ call: (canisterName, method, args) => {
+   if (!icpService) throw new Error('ICP service not available');
+   return icpService.call(canisterName, method, args);
+ },
+
  // Make query call
- query: (canisterName, method, args) => icpService.query(canisterName, method, args),
- 
+ query: (canisterName, method, args) => {
+   if (!icpService) throw new Error('ICP service not available');
+   return icpService.query(canisterName, method, args);
+ },
+
  // Batch multiple calls
  batch: async (calls) => {
+   if (!icpService) throw new Error('ICP service not available');
+   
    const results = await Promise.allSettled(
      calls.map(({ canisterName, method, args, type = 'call' }) => {
-       return type === 'query' 
+       return type === 'query'
          ? icpService.query(canisterName, method, args)
          : icpService.call(canisterName, method, args);
      })
    );
-   
+
    return results.map((result, index) => ({
      ...calls[index],
      success: result.status === 'fulfilled',
@@ -517,25 +575,27 @@ export const canister = {
      error: result.status === 'rejected' ? result.reason.message : null,
    }));
  },
- 
+
  // Retry failed calls
  retry: async (canisterName, method, args, maxRetries = 3) => {
-   let lastError;
+   if (!icpService) throw new Error('ICP service not available');
    
+   let lastError;
+
    for (let attempt = 0; attempt < maxRetries; attempt++) {
      try {
        return await icpService.call(canisterName, method, args);
      } catch (error) {
        lastError = error;
        console.warn(`Attempt ${attempt + 1} failed:`, error.message);
-       
+
        if (attempt < maxRetries - 1) {
          // Exponential backoff
          await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
        }
      }
    }
-   
+
    throw lastError;
  },
 };
@@ -546,19 +606,19 @@ export const canister = {
 export const network = {
  // Get current network configuration
  getConfig: () => getNetworkConfig(),
- 
+
  // Check if local development
  isLocal: () => {
    const config = getNetworkConfig();
    return config.host.includes('localhost') || config.host.includes('127.0.0.1');
  },
- 
+
  // Check if mainnet
  isMainnet: () => {
    const config = getNetworkConfig();
    return config.host.includes('icp0.io') || config.host.includes('ic0.app');
  },
- 
+
  // Get canister URL
  getCanisterUrl: (canisterId) => {
    const config = getNetworkConfig();
@@ -567,7 +627,7 @@ export const network = {
    }
    return `https://${canisterId}.ic0.app`;
  },
- 
+
  // Check network connectivity
  checkConnectivity: async () => {
    try {
@@ -585,16 +645,19 @@ export const network = {
 */
 export const errors = {
  // Parse error from different sources
- parse: (error) => icpService.parseCanisterError(error),
- 
+ parse: (error) => {
+   if (!icpService) return errorUtils.parseError(error);
+   return icpService.parseCanisterError(error);
+ },
+
  // Check error type
  isNetworkError: (error) => errorUtils.isNetworkError(error),
  isAuthError: (error) => errorUtils.isAuthError(error),
- 
+
  // Create user-friendly error messages
  getUserMessage: (error) => {
    const message = errors.parse(error);
-   
+
    // Map technical errors to user-friendly messages
    const errorMap = {
      'Unauthorized access': 'Please sign in to continue',
@@ -603,7 +666,7 @@ export const errors = {
      'Asset not for sale': 'This asset is not currently available for purchase',
      'Asset already owned': 'You already own this asset',
    };
-   
+
    return errorMap[message] || message || 'An unexpected error occurred';
  },
 };
@@ -617,11 +680,11 @@ export const transform = {
    if (typeof obj === 'bigint') {
      return Number(obj);
    }
-   
+
    if (Array.isArray(obj)) {
      return obj.map(transform.bigIntToNumber);
    }
-   
+
    if (obj && typeof obj === 'object') {
      const result = {};
      for (const [key, value] of Object.entries(obj)) {
@@ -629,16 +692,16 @@ export const transform = {
      }
      return result;
    }
-   
+
    return obj;
  },
- 
+
  // Convert Numbers to BigInt for canister calls
  numberToBigInt: (obj, bigIntFields = []) => {
    if (Array.isArray(obj)) {
      return obj.map(item => transform.numberToBigInt(item, bigIntFields));
    }
-   
+
    if (obj && typeof obj === 'object') {
      const result = {};
      for (const [key, value] of Object.entries(obj)) {
@@ -650,18 +713,21 @@ export const transform = {
      }
      return result;
    }
-   
+
    return obj;
  },
- 
+
  // Format Principal for display
- formatPrincipal: (principal) => icpService.formatPrincipal(principal),
- 
+ formatPrincipal: (principal) => {
+   if (!icpService) return 'Unknown';
+   return icpService.formatPrincipal(principal);
+ },
+
  // Convert timestamps from nanoseconds to milliseconds
  timestampToDate: (timestamp) => {
    return new Date(Number(timestamp) / 1_000_000);
  },
- 
+
  // Convert Date to nanoseconds timestamp
  dateToTimestamp: (date) => {
    return BigInt(date.getTime() * 1_000_000);
@@ -680,12 +746,17 @@ export const dev = {
      console.log('ICP Debug mode enabled. Access service via window.icpService');
    }
  },
- 
+
  // Get service instance for debugging
  getService: () => icpService,
- 
+
  // Log current state
  logState: () => {
+   if (!icpService) {
+     console.log('ICP Service not available (SSR environment)');
+     return;
+   }
+   
    console.log('ICP Service State:', {
      isAuthenticated: icpService.isUserAuthenticated(),
      principal: icpService.getPrincipal(),
@@ -693,11 +764,15 @@ export const dev = {
      network: network.getConfig(),
    });
  },
- 
+
  // Test canister connectivity
  testConnection: async () => {
-   const results = {};
+   if (!icpService) {
+     return { error: 'ICP service not available' };
+   }
    
+   const results = {};
+
    for (const canisterName of ['users', 'assets', 'marketplace']) {
      try {
        if (icpService.actors[canisterName]) {
@@ -711,11 +786,11 @@ export const dev = {
        results[canisterName] = `error: ${error.message}`;
      }
    }
-   
+
    return results;
  },
 };
 
 // Export main service instance and helpers
 export default icpService;
-export { icpService, auth, actors, canister, network, errors, transform, dev };
+export { icpService };

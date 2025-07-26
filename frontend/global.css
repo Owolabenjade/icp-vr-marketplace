@@ -1,0 +1,300 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* VR Nexus Design System Variables */
+@layer base {
+  :root {
+    /* VR Marketplace Brand Colors */
+    --background: 220 13% 8%;
+    --foreground: 0 0% 98%;
+    --card: 220 10% 12%;
+    --card-foreground: 0 0% 98%;
+    --popover: 220 10% 12%;
+    --popover-foreground: 0 0% 98%;
+    
+    /* Primary Blue Gradient Colors */
+    --primary: 217 91% 60%;        /* #3B82F6 */
+    --primary-dark: 217 91% 55%;   /* #2563EB */
+    --primary-foreground: 0 0% 98%;
+    
+    /* Accent Purple Gradient Colors */
+    --accent: 300 76% 72%;         /* #D946EF */
+    --accent-dark: 300 76% 67%;    /* #C026D3 */
+    --accent-foreground: 0 0% 98%;
+    
+    --secondary: 220 15% 20%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 220 13% 15%;
+    --muted-foreground: 220 9% 60%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 220 13% 18%;
+    --input: 220 13% 18%;
+    --ring: 217 91% 60%;
+    --radius: 0.75rem;
+    
+    /* VR-Specific Design Tokens */
+    --gradient-primary: linear-gradient(135deg, hsl(217 91% 60%), hsl(217 91% 55%));
+    --gradient-accent: linear-gradient(135deg, hsl(300 76% 72%), hsl(300 76% 67%));
+    --gradient-vr: linear-gradient(135deg, hsl(217 91% 60%) 0%, hsl(300 76% 72%) 100%);
+    --shadow-vr: 0 20px 25px -5px hsla(217, 91%, 60%, 0.1), 0 10px 10px -5px hsla(217, 91%, 60%, 0.04);
+    --glow-primary: 0 0 40px hsla(217, 91%, 60%, 0.3);
+    --glow-accent: 0 0 40px hsla(300, 76%, 72%, 0.3);
+    
+    /* Sidebar */
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+    box-sizing: border-box;
+    padding: 0;
+    margin: 0;
+  }
+  
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', sans-serif;
+    max-width: 100vw;
+    overflow-x: hidden;
+    min-height: 100vh;
+  }
+  
+  html {
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a1a1a1;
+}
+
+/* VR Marketplace Enhanced Styles */
+.vr-card {
+  @apply bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100;
+}
+
+.vr-card:hover {
+  @apply transform scale-105;
+}
+
+.vr-button {
+  @apply px-6 py-3 rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.vr-button-primary {
+  @apply bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500;
+}
+
+.vr-button-secondary {
+  @apply bg-secondary-200 text-secondary-800 hover:bg-secondary-300 focus:ring-secondary-500;
+}
+
+.vr-button-accent {
+  @apply bg-accent-600 text-white hover:bg-accent-700 focus:ring-accent-500;
+}
+
+.vr-button-hero {
+  @apply bg-gradient-vr text-white hover:shadow-glow-primary hover:scale-105 font-semibold;
+}
+
+.vr-input {
+  @apply w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all duration-200;
+}
+
+.vr-badge {
+  @apply inline-flex items-center px-3 py-1 rounded-full text-sm font-medium;
+}
+
+.vr-badge-primary {
+  @apply bg-primary-100 text-primary-800;
+}
+
+.vr-badge-secondary {
+  @apply bg-secondary-100 text-secondary-800;
+}
+
+.vr-badge-success {
+  @apply bg-green-100 text-green-800;
+}
+
+.vr-badge-warning {
+  @apply bg-yellow-100 text-yellow-800;
+}
+
+.vr-badge-error {
+  @apply bg-red-100 text-red-800;
+}
+
+/* Asset Card Specific Styles */
+.asset-card {
+  @apply vr-card cursor-pointer overflow-hidden;
+}
+
+.asset-card-image-container {
+  @apply relative overflow-hidden;
+}
+
+.asset-card-image {
+  @apply w-full h-48 object-cover transition-transform duration-300;
+}
+
+.asset-card:hover .asset-card-image {
+  @apply scale-110;
+}
+
+.asset-card-content {
+  @apply p-6;
+}
+
+.asset-card-title {
+  @apply text-lg font-semibold text-gray-900 mb-2 group-hover:text-primary-600 transition-colors;
+}
+
+.asset-card-description {
+  @apply text-sm text-gray-600 mb-4 line-clamp-2;
+}
+
+.asset-card-meta {
+  @apply flex items-center justify-between;
+}
+
+.asset-card-price {
+  @apply text-lg font-bold text-primary-600;
+}
+
+.asset-card-compact {
+  @apply vr-card cursor-pointer hover:bg-gray-50;
+}
+
+/* Loading animations */
+.loading-pulse {
+  @apply animate-pulse bg-gray-200 rounded;
+}
+
+.loading-spin {
+  @apply animate-spin rounded-full border-4 border-gray-200 border-t-primary-600;
+}
+
+/* VR themed backgrounds */
+.vr-hero-bg {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.marketplace-bg {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.glass-morphism {
+  backdrop-filter: blur(16px) saturate(180%);
+  background-color: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(209, 213, 219, 0.3);
+}
+
+.dark .glass-morphism {
+  background-color: rgba(17, 25, 40, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.125);
+}
+
+/* Custom asset category colors - FIXED */
+.category-environment { @apply bg-green-100 text-green-800; }
+.category-character { @apply bg-blue-100 text-blue-800; }
+.category-object { @apply bg-purple-100 text-purple-800; }
+.category-animation { @apply bg-orange-100 text-orange-800; }
+.category-audio { @apply bg-pink-100 text-pink-800; }
+.category-complete_experience { @apply bg-indigo-100 text-indigo-800; }
+
+/* Mobile responsive fixes */
+@media (max-width: 768px) {
+  .vr-card {
+    @apply transform-none;
+  }
+
+  .vr-card:hover {
+    @apply transform-none scale-100;
+  }
+}
+
+/* Focus indicators for accessibility */
+.focus-visible {
+  @apply ring-2 ring-primary-500 ring-offset-2 outline-none;
+}
+
+/* Text utilities */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}

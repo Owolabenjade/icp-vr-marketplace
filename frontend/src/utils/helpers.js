@@ -27,9 +27,9 @@ export const icpUtils = {
      ...CURRENCY_FORMAT.options,
      ...options,
    };
-   
+
    if (icp === 0) return 'Free';
-   
+
    const formatted = new Intl.NumberFormat(CURRENCY_FORMAT.locale, formatOptions).format(icp);
    return `${formatted} ICP`;
  },
@@ -92,11 +92,11 @@ export const fileUtils = {
  // Format file size for display
  formatSize: (bytes) => {
    if (bytes === 0) return '0 Bytes';
-   
+
    const k = 1024;
    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
    const i = Math.floor(Math.log(bytes) / Math.log(k));
-   
+
    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
  },
 
@@ -154,7 +154,7 @@ export const stringUtils = {
  // Convert to title case
  toTitleCase: (str) => {
    if (!str) return '';
-   return str.replace(/\w\S*/g, (txt) => 
+   return str.replace(/\w\S*/g, (txt) =>
      txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()
    );
  },
@@ -228,6 +228,70 @@ export const validationUtils = {
    const numPrice = typeof price === 'string' ? parseFloat(price) : price;
    return !isNaN(numPrice) && numPrice >= 0;
  },
+};
+
+/**
+* Authentication utilities
+*/
+export const authUtils = {
+  // Check if user has completed profile setup
+  hasCompleteProfile: (user) => {
+    return user && user.username;
+  },
+
+  // Check if user is a creator
+  isCreator: (user) => {
+    return user && (user.roles?.includes('creator') || user.totalAssetsCreated > 0);
+  },
+
+  // Check if user is verified
+  isVerified: (user) => {
+    return user && user.isVerified;
+  },
+
+  // Get user display name
+  getDisplayName: (user) => {
+    if (!user) return 'Anonymous';
+    return user.username || user.email || 'User';
+  },
+
+  // Get user avatar URL or fallback
+  getAvatarUrl: (user) => {
+    return user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(authUtils.getDisplayName(user))}&background=3B82F6&color=fff`;
+  },
+
+  // Format user role for display
+  formatRole: (role) => {
+    const roleMap = {
+      'creator': 'Creator',
+      'verified_creator': 'Verified Creator',
+      'moderator': 'Moderator',
+      'admin': 'Administrator',
+    };
+    return roleMap[role] || 'User';
+  },
+
+  // Check if user is valid principal
+  isValidPrincipal: (principal) => {
+    if (!principal) return false;
+    return principal !== 'anonymous' && principal.length > 0;
+  },
+
+  // Get principal from identity
+  getPrincipalFromIdentity: (identity) => {
+    if (!identity) return null;
+    return identity.getPrincipal?.()?.toString();
+  },
+
+  // Format principal for display
+  formatPrincipal: (principal) => {
+    if (!principal) return 'Unknown';
+    const principalStr = principal.toString();
+    if (principalStr.length > 15) {
+      return `${principalStr.slice(0, 5)}...${principalStr.slice(-5)}`;
+    }
+    return principalStr;
+  },
 };
 
 /**
@@ -348,19 +412,19 @@ export const colorUtils = {
  // Generate avatar color from string
  generateAvatarColor: (str) => {
    if (!str) return '#6B7280';
-   
+
    const colors = [
      '#EF4444', '#F97316', '#F59E0B', '#EAB308',
      '#84CC16', '#22C55E', '#10B981', '#14B8A6',
      '#06B6D4', '#0EA5E9', '#3B82F6', '#6366F1',
      '#8B5CF6', '#A855F7', '#C026D3', '#DB2777',
    ];
-   
+
    let hash = 0;
    for (let i = 0; i < str.length; i++) {
      hash = str.charCodeAt(i) + ((hash << 5) - hash);
    }
-   
+
    return colors[Math.abs(hash) % colors.length];
  },
 
@@ -392,8 +456,8 @@ export const errorUtils = {
  // Check if error is network related
  isNetworkError: (error) => {
    const errorMessage = errorUtils.parseError(error).toLowerCase();
-   return errorMessage.includes('network') || 
-          errorMessage.includes('connection') || 
+   return errorMessage.includes('network') ||
+          errorMessage.includes('connection') ||
           errorMessage.includes('timeout') ||
           errorMessage.includes('fetch');
  },
@@ -401,10 +465,26 @@ export const errorUtils = {
  // Check if error is authentication related
  isAuthError: (error) => {
    const errorMessage = errorUtils.parseError(error).toLowerCase();
-   return errorMessage.includes('unauthorized') || 
-          errorMessage.includes('forbidden') || 
+   return errorMessage.includes('unauthorized') ||
+          errorMessage.includes('forbidden') ||
           errorMessage.includes('authentication') ||
           errorMessage.includes('login');
+ },
+
+ // Get user-friendly error message
+ getUserMessage: (error) => {
+   const message = errorUtils.parseError(error);
+
+   // Map technical errors to user-friendly messages
+   const errorMap = {
+     'Unauthorized access': 'Please sign in to continue',
+     'Resource not found': 'The requested item was not found',
+     'Insufficient funds': 'You don\'t have enough ICP for this transaction',
+     'Asset not for sale': 'This asset is not currently available for purchase',
+     'Asset already owned': 'You already own this asset',
+   };
+
+   return errorMap[message] || message || 'An unexpected error occurred';
  },
 };
 
@@ -715,6 +795,7 @@ export default {
  fileUtils,
  stringUtils,
  validationUtils,
+ authUtils,
  arrayUtils,
  storageUtils,
  colorUtils,
